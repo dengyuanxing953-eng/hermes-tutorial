@@ -3,579 +3,1063 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hermes 智能体安装教程 · 30 分钟</title>
-<meta name="description" content="30 分钟，从零安装 Hermes AI 助手，配置 API，让它帮你装 Claude Code。不会写代码，也行。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<title>你的第一个 AI 智能体 · 星野宇宙</title>
+<meta name="description" content="什么是 AI 智能体？市面主流 Agent 有哪些？为什么要用 Hermes？30 分钟，从零拥有你的 AI 助手。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <style>
+/* ══════════════════════════════════════
+   星野宇宙 · AI 智能体入门
+   Design System v1.0
+   ══════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
 :root {
-  --bg: #050508;
-  --bg-card: #0d0d14;
-  --ink: #f0f0f5;
-  --ink-2: #a0a0b0;
-  --ink-3: #606070;
+  --space-deep: #040810;
+  --space-mid: #0a1230;
+  --space-blue: #12224a;
+  --earth-blue: #4A90D9;
+  --earth-green: #5BAA6A;
+  --sunrise-gold: #F0B060;
+  --sunrise-warm: #FFD580;
+  --star-white: #FFEEDD;
+  --text: #eef0f5;
+  --text-secondary: #8895b0;
+  --text-muted: #5a6a8a;
   --accent: #4A90D9;
   --accent-gold: #F0B060;
   --success: #5BAA6A;
-  --line: rgba(255,255,255,.07);
-  --mono: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, SFMono-Regular, Consolas, monospace;
-  --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --danger: #e05555;
+  --border: rgba(255,255,255,0.06);
+  --border-light: rgba(255,255,255,0.12);
+  --radius: 12px;
+  --radius-lg: 20px;
+  --max-w: 1100px;
+  --fx-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --font-sans: "Archivo", "Noto Sans SC", system-ui, sans-serif;
+  --font-mono: "Space Mono", "SF Mono", monospace;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { height: 100%; }
+
+html { scroll-behavior: smooth; }
 body {
-  background: radial-gradient(1200px 700px at 50% 25%, rgba(74,144,217,.06), transparent 70%),
-              radial-gradient(800px 500px at 80% 70%, rgba(240,176,96,.04), transparent 60%),
-              var(--bg);
-  color: var(--ink);
-  font-family: var(--sans);
-  overflow: hidden;
+  font-family: var(--font-sans);
+  background: var(--space-deep);
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-::selection { background: rgba(74,144,217,.35); }
+::selection { background: rgba(74,144,217,.4); }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; height: auto; }
 
-/* ── progress ── */
-#bar {
-  position: fixed; top: 0; left: 0; z-index: 10;
-  height: 2px; width: 0;
-  background: linear-gradient(90deg, var(--accent), var(--accent-gold));
-  transition: width .5s cubic-bezier(.16,1,.3,1);
-}
-#count {
-  position: fixed; bottom: 26px; left: 28px; z-index: 10;
-  font-family: var(--mono); font-size: 12px; color: var(--ink-3);
-  letter-spacing: .1em;
-}
-#key-hint {
-  position: fixed; bottom: 26px; right: 28px; z-index: 10;
-  font-family: var(--mono); font-size: 12px; color: var(--ink-3);
-}
-@media (max-width: 640px), (pointer: coarse) { #key-hint { display: none; } }
+/* ── layout ── */
+.container { max-width: var(--max-w); margin: 0 auto; padding: 0 clamp(20px, 4vw, 60px); }
 
-/* ── deck ── */
-#deck { position: fixed; inset: 0; }
-.slide {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 48px 24px 90px;
-  overflow-y: auto;
-  opacity: 0;
-  transform: translateY(36px);
-  transition: opacity .55s cubic-bezier(.16,1,.3,1), transform .55s cubic-bezier(.16,1,.3,1);
-  pointer-events: none;
-  visibility: hidden;
-}
-.slide.active { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
-.slide.past { transform: translateY(-36px); }
-.inner { max-width: 640px; width: 100%; margin: auto; }
-
-/* ── type ── */
-.step-no {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--accent);
-  letter-spacing: .3em;
-  margin-bottom: 26px;
-}
-h1 {
-  font-size: clamp(30px, 5.6vw, 50px);
-  line-height: 1.35;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-.nowrap { white-space: nowrap; }
-h2 {
-  font-size: clamp(24px, 5vw, 38px);
-  line-height: 1.4;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 18px;
-}
-.sub { color: var(--ink-2); font-size: clamp(15px, 2.5vw, 18px); margin-top: 18px; line-height: 1.9; }
-.body { color: var(--ink-2); font-size: 15.5px; line-height: 2; margin-bottom: 8px; }
-.body strong { color: var(--ink); }
-.body a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(74,144,217,.3); }
-.body a:hover { border-color: var(--accent); }
-.caret {
-  display: inline-block; width: .5em; height: .9em;
-  background: var(--accent-gold);
-  margin-left: 10px; vertical-align: -2px;
-  animation: blink 1.1s steps(1) infinite;
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-/* ── command block ── */
-.cmd {
+/* ── section ── */
+.section {
+  padding: clamp(80px, 10vw, 140px) 0;
   position: relative;
-  background: var(--bg-card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 18px 92px 18px 22px;
-  margin: 22px auto 0;
-  font-family: var(--mono);
-  font-size: clamp(13px, 2.2vw, 15px);
-  text-align: left;
-  word-break: break-all;
-  line-height: 1.8;
-  max-width: 560px;
 }
-.cmd::before { content: "$ "; color: var(--ink-3); }
-.cmd.say::before { content: "» "; color: var(--accent-gold); }
-.cmd .os {
-  position: absolute; top: -9px; left: 16px;
-  font-size: 10.5px; letter-spacing: .15em;
-  color: var(--accent);
-  background: var(--bg);
-  padding: 0 8px;
-}
-.copy {
-  position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
-  font-family: var(--mono); font-size: 12px;
-  background: transparent; color: var(--ink-2);
-  border: 1px solid rgba(255,255,255,.16); border-radius: 7px;
-  padding: 5px 13px; cursor: pointer;
-  transition: color .15s, border-color .15s;
-}
-.copy:hover { color: var(--accent-gold); border-color: var(--accent-gold); }
-.copy.ok { color: var(--bg); background: var(--accent-gold); border-color: var(--accent-gold); }
-
-.if {
-  font-size: 13px; color: var(--ink-2);
-  margin-top: 16px; line-height: 1.9;
-}
-.if a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(74,144,217,.3); }
-.if a:hover { border-color: var(--accent); }
-
-/* ── provider cards ── */
-.providers {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 22px auto 0;
-  max-width: 560px;
-}
-.provider-card {
-  background: var(--bg-card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 16px;
-  cursor: pointer;
-  transition: border-color .2s, transform .15s;
-  text-align: left;
-}
-.provider-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.provider-card.selected { border-color: var(--accent-gold); background: rgba(240,176,96,.06); }
-.provider-card .name { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
-.provider-card .desc { font-size: 12.5px; color: var(--ink-2); line-height: 1.6; }
-.provider-card .price { font-family: var(--mono); font-size: 11px; color: var(--accent-gold); margin-top: 6px; }
-
-/* ── rules box ── */
-.rules-box {
-  position: relative;
-  background: var(--bg-card);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 18px 92px 18px 22px;
-  margin: 22px auto 0;
-  font-family: var(--mono);
-  font-size: 13px;
-  text-align: left;
-  line-height: 1.8;
-  max-width: 560px;
-  max-height: 220px;
-  overflow-y: auto;
-  color: var(--ink-2);
-  white-space: pre-wrap;
-  word-break: break-all;
-}
-.rules-box::-webkit-scrollbar { width: 4px; }
-.rules-box::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 2px; }
-
-/* ── controls ── */
-.next {
-  display: inline-block;
-  margin-top: 40px;
-  background: linear-gradient(135deg, var(--accent), #3a7bc8);
-  color: #fff;
-  font-weight: 600;
-  font-size: 15px;
-  font-family: inherit;
-  padding: 14px 42px;
-  border: none; border-radius: 999px;
-  cursor: pointer;
-  transition: transform .15s, filter .15s;
-}
-.next:hover { filter: brightness(1.12); transform: translateY(-1px); }
-.next:active { transform: scale(.97); }
-.back {
-  position: fixed; top: 22px; left: 24px; z-index: 10;
-  background: none; border: none;
-  font-family: var(--mono); font-size: 12.5px;
-  color: var(--ink-3); cursor: pointer;
-  padding: 6px 10px;
-  opacity: 0; pointer-events: none;
-  transition: opacity .3s, color .15s;
-}
-.back:hover { color: var(--ink-2); }
-body[data-step]:not([data-step="0"]) .back { opacity: 1; pointer-events: auto; }
-.foot-link {
-  display: block;
-  margin-top: 30px;
-  font-size: 13px;
-  color: var(--ink-3);
-  text-decoration: none;
-}
-.foot-link:hover { color: var(--ink-2); }
-.foot-link b { color: var(--accent); font-weight: 500; }
-
-/* ── finale ── */
-.omt {
-  font-family: var(--mono);
-  font-size: 13px;
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
   letter-spacing: .35em;
   color: var(--accent-gold);
-  margin-bottom: 26px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
 }
-
-/* ── tag ── */
-.tag {
-  display: inline-block;
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .1em;
-  color: var(--success);
-  border: 1px solid rgba(91,170,106,.3);
-  border-radius: 6px;
-  padding: 3px 10px;
+.section-title {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   margin-bottom: 20px;
 }
-
-/* ── tip box ── */
-.tip {
-  background: rgba(74,144,217,.08);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 8px 8px 0;
-  padding: 14px 18px;
-  margin: 18px auto 0;
-  max-width: 560px;
-  font-size: 13.5px;
-  color: var(--ink-2);
+.section-desc {
+  font-size: clamp(16px, 2.2vw, 19px);
+  color: var(--text-secondary);
   line-height: 1.8;
-  text-align: left;
+  max-width: 680px;
 }
-.tip strong { color: var(--accent); }
 
-/* ── os tabs ── */
-.os-tabs {
+/* ── divider ── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-light) 20%, var(--border-light) 80%, transparent);
+}
+
+/* ── cards ── */
+.card-grid {
+  display: grid;
+  gap: 20px;
+  margin-top: 48px;
+}
+.card-grid.cols-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.card-grid.cols-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+.card {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  transition: border-color .3s, transform .3s, background .3s;
+}
+.card:hover {
+  border-color: rgba(74,144,217,.3);
+  transform: translateY(-4px);
+  background: rgba(74,144,217,.03);
+}
+.card-icon { font-size: 40px; margin-bottom: 16px; }
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
   display: flex;
-  gap: 0;
-  margin: 22px auto 0;
-  max-width: 560px;
-  border: 1px solid var(--line);
-  border-radius: 10px 10px 0 0;
-  overflow: hidden;
+  align-items: center;
+  gap: 10px;
 }
-.os-tab {
-  flex: 1;
-  padding: 12px;
+.card-title .badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  letter-spacing: .05em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 400;
+}
+.badge-open { color: var(--success); border: 1px solid rgba(91,170,106,.4); }
+.badge-paid { color: var(--accent-gold); border: 1px solid rgba(240,176,96,.4); }
+.badge-free { color: var(--accent); border: 1px solid rgba(74,144,217,.4); }
+.card-body {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.8;
+}
+.card-body strong { color: var(--text); }
+.card-tag {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(255,255,255,.04);
+  border-radius: 6px;
+  padding: 3px 10px;
+  margin-top: 12px;
+  margin-right: 6px;
+}
+
+/* ── comparison table ── */
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 40px;
+  font-size: 14.5px;
+}
+.compare-table th, .compare-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.compare-table th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .1em;
+  color: var(--text-muted);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+.compare-table td { color: var(--text-secondary); }
+.compare-table tr:hover td { background: rgba(74,144,217,.03); }
+.compare-table .highlight { color: var(--accent-gold); font-weight: 600; }
+.compare-table .check { color: var(--success); }
+.compare-table .cross { color: var(--text-muted); }
+
+/* ── step blocks ── */
+.step-block {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 56px;
+  align-items: flex-start;
+}
+.step-num {
+  flex-shrink: 0;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #3a7bc8);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-content { flex: 1; }
+.step-content h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.step-content p {
+  color: var(--text-secondary);
+  font-size: 15.5px;
+  line-height: 1.9;
+  margin-bottom: 10px;
+}
+.step-content p strong { color: var(--text); }
+
+/* ── cmd block ── */
+.cmd {
+  position: relative;
+  background: rgba(0,0,0,.4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 80px 16px 20px;
+  margin: 16px 0;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.7;
+  word-break: break-all;
+  color: var(--text);
+}
+.cmd::before { content: "$ "; color: var(--text-muted); }
+.cmd.say::before { content: "» "; color: var(--accent-gold); }
+.cmd .os-tag {
+  position: absolute; top: -9px; left: 14px;
+  font-size: 10px; letter-spacing: .15em;
+  color: var(--accent);
+  background: var(--space-deep);
+  padding: 0 8px;
+}
+.copy-btn {
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 11px;
+  background: transparent; color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,.12); border-radius: 6px;
+  padding: 4px 12px; cursor: pointer;
+  transition: all .15s;
+}
+.copy-btn:hover { color: var(--accent-gold); border-color: var(--accent-gold); }
+.copy-btn.ok { color: var(--space-deep); background: var(--accent-gold); border-color: var(--accent-gold); }
+
+/* ── tip / warn boxes ── */
+.tip-box {
+  background: rgba(74,144,217,.07);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+.tip-box strong { color: var(--accent); }
+.warn-box {
+  background: rgba(240,176,96,.07);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 20px;
+  margin: 16px 0;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+.warn-box strong { color: var(--accent-gold); }
+
+/* ── hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  font-family: var(--mono);
+  position: relative;
+  overflow: hidden;
+  padding: 120px 24px 80px;
+}
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 800px 500px at 50% 40%, rgba(74,144,217,.12), transparent 70%),
+    radial-gradient(ellipse 600px 400px at 30% 60%, rgba(240,176,96,.06), transparent 60%),
+    radial-gradient(ellipse 400px 300px at 70% 30%, rgba(91,170,106,.05), transparent 50%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 800px;
+}
+.hero-tag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: .4em;
+  color: var(--accent-gold);
+  margin-bottom: 32px;
+}
+.hero h1 {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 28px;
+}
+.hero h1 .grad {
+  background: linear-gradient(135deg, var(--accent), var(--accent-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(17px, 2.5vw, 21px);
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 48px;
+}
+.hero-sub strong { color: var(--text); }
+.hero-cta {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent), #3a7bc8);
+  color: #fff;
+  font-weight: 700;
+  font-size: 17px;
+  padding: 16px 48px;
+  border-radius: 999px;
+  transition: transform .2s, filter .2s;
+  text-decoration: none;
+}
+.hero-cta:hover { transform: translateY(-2px); filter: brightness(1.1); text-decoration: none; }
+.hero-cta-sub {
+  display: block;
+  margin-top: 16px;
   font-size: 13px;
-  color: var(--ink-3);
-  background: var(--bg-card);
-  border: none;
-  cursor: pointer;
-  transition: color .2s, background .2s;
+  color: var(--text-muted);
 }
-.os-tab.active { color: var(--accent-gold); background: rgba(240,176,96,.08); }
-.os-tab:hover { color: var(--ink); }
-.os-content {
-  border: 1px solid var(--line);
-  border-top: none;
-  border-radius: 0 0 10px 10px;
-  padding: 20px 22px;
-  max-width: 560px;
-  margin: 0 auto;
-  background: var(--bg-card);
-  display: none;
+
+/* ── scroll indicator ── */
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  animation: float 2.5s ease-in-out infinite;
 }
-.os-content.active { display: block; }
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(8px); }
+}
+
+/* ── image placeholder ── */
+.img-placeholder {
+  background: rgba(255,255,255,.03);
+  border: 1px dashed rgba(255,255,255,.1);
+  border-radius: var(--radius-lg);
+  padding: 60px 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 32px 0;
+}
+.img-placeholder .icon { font-size: 48px; margin-bottom: 12px; }
+
+/* ── vpn diagram ── */
+.vpn-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 40px 0;
+  flex-wrap: wrap;
+}
+.vpn-node {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: center;
+  min-width: 120px;
+}
+.vpn-node .emoji { font-size: 32px; margin-bottom: 8px; }
+.vpn-node .label { font-size: 14px; font-weight: 600; }
+.vpn-node .sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.vpn-arrow {
+  font-size: 24px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── footer ── */
+.footer {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+.footer a { color: var(--accent); }
+
+/* ── responsive ── */
+@media (max-width: 768px) {
+  .step-block { flex-direction: column; gap: 20px; }
+  .step-num { width: 40px; height: 40px; font-size: 16px; }
+  .vpn-diagram { flex-direction: column; }
+  .vpn-arrow { transform: rotate(90deg); }
+  .compare-table { font-size: 13px; }
+  .compare-table th, .compare-table td { padding: 10px 8px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
 </style>
 </head>
-<body data-step="0">
+<body>
 
-<div id="bar" aria-hidden="true"></div>
-<button class="back" id="back">← 上一步</button>
-<div id="count" aria-hidden="true"></div>
-<div id="key-hint" aria-hidden="true">回车 ↵ 继续</div>
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-tag">XINGYE UNIVERSE · 星野宇宙</div>
+    <h1>你的第一个<br><span class="grad">AI 智能体</span></h1>
+    <p class="hero-sub">
+      大模型只能聊天。<strong>智能体能动手干活。</strong><br>
+      30 分钟，从零装一个真正属于你的 AI 助手。<br>
+      不会写代码？也行。
+    </p>
+    <a href="#what" class="hero-cta">开始了解 ↓</a>
+    <span class="hero-cta-sub">完全免费开始 · 不用翻墙 · 国产 API 直接用</span>
+  </div>
+  <div class="scroll-hint">
+    <span>↓</span>
+    <span>SCROLL</span>
+  </div>
+</section>
 
-<main id="deck">
+<!-- ═══════════ SECTION 1: 什么是智能体 ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="what">
+  <div class="container">
+    <p class="section-label">CHAPTER 01</p>
+    <h2 class="section-title">大模型 vs 智能体<br>到底有什么区别？</h2>
+    <p class="section-desc">
+      你可能已经用过 ChatGPT、DeepSeek、Kimi。它们很聪明，但只能<strong>聊天</strong>——你问它答，仅此而已。
+    </p>
+    <p class="section-desc" style="margin-top: 16px;">
+      <strong>智能体（Agent）</strong>不一样。它能<strong>自己动手</strong>：帮你跑命令、装软件、改文件、操作浏览器、甚至写完代码直接部署上线。
+    </p>
 
-  <!-- 0 · 开场 -->
-  <section class="slide active">
-    <div class="inner">
-      <div class="tag">FOR BEGINNERS</div>
-      <h1 id="open-line">30 分钟后，<br>你的电脑会有一个<span class="nowrap">AI 助手。<span class="caret" aria-hidden="true"></span></span></h1>
-      <p class="sub">它叫 Hermes，能帮你写代码、装软件、回答问题。<br>不会写代码，也行。跟着走就好。</p>
-      <button class="next" data-next>开始</button>
-      <a class="foot-link" href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener">Hermes 是什么？看 GitHub 介绍 →</a>
+    <!-- 图片提示词 ① -->
+    <div class="img-placeholder">
+      <div class="icon">🖼️</div>
+      <strong>图片位置 ①：大模型 vs 智能体 对比图</strong><br>
+      <span style="font-size:12px;">左：一个人对着屏幕打字，AI只能回复文字（气泡对话框）<br>
+      右：AI伸出机械手臂在键盘上打代码、打开终端、下载文件（正在干活）<br>
+      中间一个大箭头从左到右，标注"从聊天到动手"<br>
+      暗色科技风，宇宙蓝+金色点缀，极简风格</span>
     </div>
-  </section>
 
-  <!-- 1 · 安装 Hermes -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 1 / 6</p>
-      <h2>安装 Hermes</h2>
-      <p class="body">打开你的<strong>终端</strong>：<br>Mac 在「应用程序 → 实用工具」找终端；<br>Windows 按 <strong>Win + R</strong>，输入 <strong>powershell</strong> 回车。</p>
-      <p class="body">然后粘贴这行命令，回车：</p>
-      <div class="cmd">curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash<button class="copy">复制</button></div>
-      <p class="if">安装需要几分钟，看到 <strong>Installation complete</strong> 就成功了。<br>如果提示 <strong>curl: command not found</strong>，Windows 用户先装 <a href="https://curl.se/windows/" target="_blank" rel="noopener">curl for Windows</a>。</p>
-      <button class="next" data-next>装好了，下一步</button>
-    </div>
-  </section>
-
-  <!-- 2 · 启动 & 打开界面 -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 2 / 6</p>
-      <h2>启动它</h2>
-      <p class="body">在终端输入：</p>
-      <div class="cmd">hermes setup<button class="copy">复制</button></div>
-      <p class="body">这是一个交互式向导，<strong>一路按回车</strong>用默认值就好。<br>它会帮你检查环境、创建配置文件。</p>
-      <p class="body" style="margin-top:12px;">设置完后，输入：</p>
-      <div class="cmd">hermes<button class="copy">复制</button></div>
-      <p class="if">看到 Hermes 的欢迎界面，说明它活了！先输入 <strong>/exit</strong> 退出，我们去配 API。</p>
-      <button class="next" data-next>它活了，下一步</button>
-    </div>
-  </section>
-
-  <!-- 3 · 选 API -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 3 / 6</p>
-      <h2>选一个 API 服务商</h2>
-      <p class="body">API 就是 AI 的"电费"——用多少付多少。<br>选一个注册，<strong>充 5~10 块钱</strong>够用很久。</p>
-      <div class="providers" id="providers">
-        <div class="provider-card" data-provider="deepseek">
-          <div class="name">🐋 DeepSeek</div>
-          <div class="desc">最便宜，中文强<br>适合日常开发</div>
-          <div class="price">≈ ¥1 / 百万 tokens</div>
-        </div>
-        <div class="provider-card" data-provider="qwen">
-          <div class="name">🔮 通义千问</div>
-          <div class="desc">阿里出品，稳定<br>免费额度大方</div>
-          <div class="price">有免费额度</div>
-        </div>
-        <div class="provider-card" data-provider="kimi">
-          <div class="name">🌙 Kimi</div>
-          <div class="desc">月之暗面<br>长文本能力强</div>
-          <div class="price">≈ ¥4 / 百万 tokens</div>
-        </div>
-        <div class="provider-card" data-provider="mimo">
-          <div class="name">Ⓜ️ MiMo</div>
-          <div class="desc">小米出品<br>推理能力优秀</div>
-          <div class="price">≈ ¥2 / 百万 tokens</div>
+    <div class="card-grid cols-2" style="margin-top: 48px;">
+      <div class="card">
+        <div class="card-icon">💬</div>
+        <div class="card-title">大模型（LLM）</div>
+        <div class="card-body">
+          <strong>只能聊天，不能动手。</strong><br>
+          你问它"怎么装 Python"，它给你一段文字教程。<br>
+          但它不会帮你打开终端、不会帮你执行命令。<br><br>
+          代表：ChatGPT · Claude · DeepSeek · Gemini · Kimi · 千问 · MiMo
         </div>
       </div>
-      <p class="if" style="margin-top:18px;">点击选一个，下一步教你注册拿钥匙。</p>
-      <button class="next" data-next>选好了，下一步</button>
-    </div>
-  </section>
-
-  <!-- 4 · 拿 API Key & 配置 -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 4 / 6</p>
-      <h2>拿钥匙，插进去</h2>
-
-      <!-- DeepSeek -->
-      <div class="provider-content" data-for="deepseek" style="display:none;">
-        <p class="body">打开 <a href="https://platform.deepseek.com" target="_blank" rel="noopener"><strong>platform.deepseek.com</strong></a>，手机号注册。</p>
-        <p class="body">进「API Keys」→ 点「创建 API Key」→ <strong>复制</strong>。</p>
-        <div class="tip"><strong>⚠️ 钥匙只显示一次。</strong>复制后立刻粘到备忘录。然后去「充值」充 5 块钱。</div>
+      <div class="card" style="border-color: rgba(240,176,96,.2);">
+        <div class="card-icon">🤖</div>
+        <div class="card-title">智能体（Agent）<span class="badge badge-open">能动手</span></div>
+        <div class="card-body">
+          <strong>不只是聊天，还能干活。</strong><br>
+          你说"帮我装 Python"，它直接帮你执行安装命令。<br>
+          你说"帮我做个网站"，它写完代码帮你部署上线。<br><br>
+          代表：Hermes · Claude Code · Codex · Cursor Agent · OpenClaw
+        </div>
       </div>
-      <!-- Qwen -->
-      <div class="provider-content" data-for="qwen" style="display:none;">
-        <p class="body">打开 <a href="https://dashscope.aliyun.com" target="_blank" rel="noopener"><strong>dashscope.aliyun.com</strong></a>，用支付宝/淘宝登录。</p>
-        <p class="body">进「API-KEY 管理」→ 点「创建」→ <strong>复制</strong>。</p>
-        <div class="tip"><strong>💡 千问有免费额度</strong>，新用户送 100 万 tokens，不用充值就能开始。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 2: 主流 Agent 介绍 ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="agents">
+  <div class="container">
+    <p class="section-label">CHAPTER 02</p>
+    <h2 class="section-title">市面上有哪些智能体？</h2>
+    <p class="section-desc">
+      2025-2026 年，AI 智能体井喷。下面是最主流的几个，各有侧重。
+    </p>
+
+    <!-- 图片提示词 ② -->
+    <div class="img-placeholder">
+      <div class="icon">🖼️</div>
+      <strong>图片位置 ②：智能体全家福</strong><br>
+      <span style="font-size:12px;">5个发光的AI机器人/智能体形象，站在一条星空轨道上<br>
+      每个头顶一个logo/图标（Hermes=希腊头盔, Claude Code=橙色闪电, Codex=OpenAI螺旋, Cursor=紫色光标, OpenClaw=龙虾钳子）<br>
+      暗色宇宙背景，星光粒子，科技感，极简扁平风格<br>
+      底部一行小字"2026 主流 AI 智能体"</span>
+    </div>
+
+    <div class="card-grid cols-3">
+      <div class="card" style="border-color: rgba(240,176,96,.25);">
+        <div class="card-icon">⚡</div>
+        <div class="card-title">Hermes <span class="badge badge-open">开源</span></div>
+        <div class="card-body">
+          Nous Research 出品。<strong>我们推荐的第一个智能体。</strong><br><br>
+          能接任何大模型（DeepSeek、千问、Kimi、MiMo 都行），免费开源。能在终端、微信、Telegram、飞书里用。能装插件、记记忆、定时任务。<br><br>
+          <strong>适合谁</strong>：所有人，尤其是零基础新手
+        </div>
+        <span class="card-tag">多平台</span>
+        <span class="card-tag">可换模型</span>
+        <span class="card-tag">免费</span>
       </div>
-      <!-- Kimi -->
-      <div class="provider-content" data-for="kimi" style="display:none;">
-        <p class="body">打开 <a href="https://platform.moonshot.cn" target="_blank" rel="noopener"><strong>platform.moonshot.cn</strong></a>，手机号注册。</p>
-        <p class="body">进「API Key 管理」→ 点「创建」→ <strong>复制</strong>。</p>
-        <div class="tip"><strong>💡</strong> 新用户有免费额度，先体验再充值。</div>
+      <div class="card">
+        <div class="card-icon">🟠</div>
+        <div class="card-title">Claude Code <span class="badge badge-paid">付费</span></div>
+        <div class="card-body">
+          Anthropic 出品。<strong>终端里的编程专家。</strong><br><br>
+          在命令行里跑，能自己读代码、改文件、跑测试、提交 Git。适合已经有编程基础的人。需要 Claude API Key（按量付费）。<br><br>
+          <strong>适合谁</strong>：程序员、有基础的用户
+        </div>
+        <span class="card-tag">终端</span>
+        <span class="card-tag">编程</span>
+        <span class="card-tag">按量付费</span>
       </div>
-      <!-- MiMo -->
-      <div class="provider-content" data-for="mimo" style="display:none;">
-        <p class="body">打开 <a href="https://platform.mimo.xiaomi.com" target="_blank" rel="noopener"><strong>platform.mimo.xiaomi.com</strong></a>，手机号注册。</p>
-        <p class="body">进「API Keys」→ 点「创建」→ <strong>复制</strong>。</p>
-        <div class="tip"><strong>💡 MiMo 推理能力强</strong>，代码任务表现好。新用户有免费额度。</div>
+      <div class="card">
+        <div class="card-icon">🔮</div>
+        <div class="card-title">Codex <span class="badge badge-paid">付费</span></div>
+        <div class="card-body">
+          OpenAI 出品。<strong>云端编程智能体。</strong><br><br>
+          不用装在本地，在浏览器里就能用。能读 GitHub 仓库、写代码、提 PR。需要 ChatGPT Pro 订阅（$200/月）。<br><br>
+          <strong>适合谁</strong>：重度开发者、团队协作
+        </div>
+        <span class="card-tag">云端</span>
+        <span class="card-tag">GitHub</span>
+        <span class="card-tag">$200/月</span>
       </div>
-      <p class="if" id="no-selection-tip">👆 先在上一步选一个服务商，这里才会显示注册指引。</p>
-
-      <p class="body" id="config-step" style="margin-top: 20px; display:none;">
-        拿到钥匙后，在终端运行：
-      </p>
-      <div class="cmd" id="config-cmd" style="display:none;">hermes model<button class="copy">复制</button></div>
-      <p class="body" id="config-desc" style="display:none;">
-        按提示选你的服务商，粘贴 API Key，完成。
-      </p>
-      <button class="next" data-next>配好了，下一步</button>
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <div class="card-title">Cursor Agent <span class="badge badge-free">免费试用</span></div>
+        <div class="card-body">
+          <strong>带 AI 的代码编辑器。</strong><br><br>
+          可视化界面，写代码时 AI 实时补全。内置 Agent 模式能帮你重构、调试。免费版有次数限制，Pro $20/月。<br><br>
+          <strong>适合谁</strong>：喜欢可视化界面的开发者
+        </div>
+        <span class="card-tag">IDE</span>
+        <span class="card-tag">可视化</span>
+        <span class="card-tag">有免费版</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🦞</div>
+        <div class="card-title">OpenClaw <span class="badge badge-open">开源</span></div>
+        <div class="card-body">
+          <strong>桌面 GUI 自动化智能体。</strong><br><br>
+          能操控鼠标键盘、截图识别、操作浏览器。适合需要"看屏幕干活"的场景，比如自动填表、批量操作。<br><br>
+          <strong>适合谁</strong>：需要桌面自动化的用户
+        </div>
+        <span class="card-tag">桌面</span>
+        <span class="card-tag">GUI</span>
+        <span class="card-tag">自动化</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌊</div>
+        <div class="card-title">Windsurf Agent <span class="badge badge-free">免费试用</span></div>
+        <div class="card-body">
+          <strong>另一个带 AI 的编辑器。</strong><br><br>
+          和 Cursor 类似，但主打"Flow"模式——AI 和你一起写代码，像结对编程。免费版可用，Pro $15/月。<br><br>
+          <strong>适合谁</strong>：想要不同体验的开发者
+        </div>
+        <span class="card-tag">IDE</span>
+        <span class="card-tag">结对编程</span>
+        <span class="card-tag">有免费版</span>
+      </div>
     </div>
-  </section>
 
-  <!-- 5 · 助手指令 -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 5 / 6</p>
-      <h2>给助手一份说明书</h2>
-      <p class="body">这一步让 Hermes 变成<strong>你的专属助手</strong>。<br>在终端运行：</p>
-      <div class="cmd">hermes config edit<button class="copy">复制</button></div>
-      <p class="body">找到 <strong>agent</strong> 那一栏，把下面这段粘进去作为 <strong>system_prompt</strong>：</p>
-      <div class="rules-box" id="rules-text">你是一个友好的 AI 编程助手，名叫 Hermes。
-
-## 你的职责
-- 帮助零基础用户学习编程和使用 AI 工具
-- 回答用中文，简洁明了，少用专业术语
-- 每次操作前先解释"这是什么"和"为什么要这样做"
-- 遇到报错，先翻译成人话，再给解决方案
-
-## 当用户说"帮我装 Claude Code"
-1. 先确认用户的系统（Windows / Mac / Linux）
-2. Windows：运行 winget install Anthropic.ClaudeCode
-3. Mac：运行 brew install --cask claude-code@latest
-4. Linux：运行 npm install -g @anthropic-ai/claude-code
-5. 装完验证：运行 claude --version
-6. 告诉用户：终端输入 claude 回车即可启动
-
-## 代码风格
-- 写完代码解释每一行在干什么
-- 优先用最简单的方案
-- 出错不慌，一步步排查<button class="copy">复制</button></div>
-      <p class="if">不想手动编辑？也可以直接在 Hermes 对话里说：<br>"请把你的系统提示词改成：你是一个友好的 AI 编程助手……"</p>
-      <button class="next" data-next>设好了，下一步</button>
+    <!-- 对比表 -->
+    <h3 style="font-size: 24px; font-weight: 700; margin-top: 64px; margin-bottom: 8px;">一张表看清楚</h3>
+    <p style="color: var(--text-secondary); font-size: 15px; margin-bottom: 8px;">哪个最适合你？</p>
+    <div style="overflow-x: auto;">
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>智能体</th>
+          <th>价格</th>
+          <th>中文</th>
+          <th>换模型</th>
+          <th>多平台</th>
+          <th>难度</th>
+          <th>推荐度</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="highlight">Hermes ⚡</td>
+          <td class="highlight">免费</td>
+          <td class="check">✓</td>
+          <td class="check">✓ 任意</td>
+          <td class="check">✓ 终端/微信/飞书/TG</td>
+          <td>⭐ 简单</td>
+          <td class="highlight">⭐⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>Claude Code</td>
+          <td>按量付费</td>
+          <td class="check">✓</td>
+          <td class="cross">✗ 仅Claude</td>
+          <td>终端</td>
+          <td>⭐⭐ 中等</td>
+          <td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>Codex</td>
+          <td>$200/月</td>
+          <td class="check">✓</td>
+          <td class="cross">✗ 仅OpenAI</td>
+          <td>云端</td>
+          <td>⭐⭐ 中等</td>
+          <td>⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>Cursor Agent</td>
+          <td>$20/月</td>
+          <td class="check">✓</td>
+          <td>部分</td>
+          <td>桌面IDE</td>
+          <td>⭐ 简单</td>
+          <td>⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>OpenClaw</td>
+          <td class="highlight">免费</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td>桌面</td>
+          <td>⭐⭐⭐ 较难</td>
+          <td>⭐⭐⭐</td>
+        </tr>
+      </tbody>
+    </table>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 6 · 让 Hermes 装 Claude Code -->
-  <section class="slide">
-    <div class="inner">
-      <p class="step-no">STEP 6 / 6</p>
-      <h2>让它帮你装 Claude Code</h2>
-      <p class="body">重新启动 Hermes：</p>
-      <div class="cmd">hermes<button class="copy">复制</button></div>
-      <p class="body" style="margin-top:12px;">然后把这句话粘进去，回车：</p>
-      <div class="cmd say">帮我安装 Claude Code，装完帮我验证一下<button class="copy">复制</button></div>
-      <p class="body" style="margin-top:16px;">Hermes 会自动帮你执行安装命令。<br>过程中如果弹出确认提示，输入 <strong>y</strong> 回车。</p>
-      <div class="tip"><strong>💡 装完之后</strong>，新开一个终端窗口，输入 <code>claude</code> 回车。<br>看到 Claude Code 的欢迎界面就成功了！</div>
-      <button class="next" data-next>搞定了！</button>
+<!-- ═══════════ SECTION 3: 为什么选 Hermes ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="why">
+  <div class="container">
+    <p class="section-label">CHAPTER 03</p>
+    <h2 class="section-title">为什么我们推荐<br>先装 Hermes？</h2>
+    <p class="section-desc">
+      不是因为它最厉害，是因为它<strong>最适合新手起步</strong>。
+    </p>
+
+    <div class="card-grid cols-2" style="margin-top: 48px;">
+      <div class="card">
+        <div class="card-icon">🆓</div>
+        <div class="card-title">免费 + 开源</div>
+        <div class="card-body">
+          不用花一分钱。代码公开，安全透明。<br>
+          你只需要花几块钱买个 API（就是AI的"电费"），就能一直用。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <div class="card-title">随时换模型</div>
+        <div class="card-body">
+          今天用 DeepSeek，明天想试 Kimi，后天想用 MiMo——<br>
+          一条命令切换，不用重新安装。<strong>不被任何公司绑死。</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <div class="card-title">到处都能用</div>
+        <div class="card-body">
+          终端里能用，微信里能用，Telegram、飞书都能用。<br>
+          <strong>同一个AI助手，出现在你最常用的地方。</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🧠</div>
+        <div class="card-title">会记住你</div>
+        <div class="card-body">
+          它有记忆功能。你告诉它一次你的偏好，下次还记得。<br>
+          <strong>越用越懂你，越用越顺手。</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔧</div>
+        <div class="card-title">能装插件</div>
+        <div class="card-body">
+          需要什么功能，装个插件就行。<br>
+          搜技能、装技能、用技能——像手机装 App 一样简单。
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">帮你装其他的</div>
+        <div class="card-body">
+          装好 Hermes 之后，你可以直接跟它说：<br>
+          "帮我装 Claude Code"——它就帮你装。<strong>用一个AI，装更多AI。</strong>
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- 7 · 完成 -->
-  <section class="slide">
-    <div class="inner">
-      <div class="omt">CONGRATULATIONS</div>
-      <h1 style="font-size:clamp(28px,5.5vw,44px);">你现在有两个 AI 助手了。</h1>
-      <p class="sub"><strong>Hermes</strong>：全能助手，能帮你装软件、管文件、跑命令。<br><strong>Claude Code</strong>：编程专家，能自己写代码、改文件、部署项目。</p>
-      <p class="sub" style="margin-top:24px;">试试在 Claude Code 里输入：</p>
-      <div class="cmd say">帮我做一个自我介绍网页，用 HTML，做完告诉我文件在哪里<button class="copy">复制</button></div>
-      <p class="sub" style="font-size:14px; margin-top:30px;">—— 星野宇宙 · 让每个人都用上 AI</p>
+<!-- ═══════════ SECTION 4: VPN / 代理 ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="vpn">
+  <div class="container">
+    <p class="section-label">CHAPTER 04</p>
+    <h2 class="section-title">VPN 和代理<br>你可能需要知道这些</h2>
+    <p class="section-desc">
+      用国外的 AI 服务，有时候需要"特殊的网络工具"。这一章帮你搞清楚是什么、为什么需要、怎么弄。
+    </p>
+
+    <!-- 图片提示词 ③ -->
+    <div class="img-placeholder">
+      <div class="icon">🖼️</div>
+      <strong>图片位置 ③：VPN/代理原理图</strong><br>
+      <span style="font-size:12px;">一条网络路径的可视化：<br>
+      左边：用户的电脑（小房子图标）<br>
+      中间：一个发光的"中转站"（标注 VPN / 代理）<br>
+      右边：AI 服务器（云朵图标，标注 OpenAI / Anthropic）<br>
+      普通路径：电脑→服务器（被一面墙挡住，标注"网络限制"）<br>
+      VPN路径：电脑→中转站→服务器（绕过墙，畅通无阻）<br>
+      暗色背景，路径用发光线条，科技风</span>
     </div>
-  </section>
 
-</main>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="card-icon">🔐</div>
+        <div class="card-title">什么是 VPN？</div>
+        <div class="card-body">
+          VPN 全称"虚拟专用网络"。简单说就是<strong>给你的网络开一条加密隧道</strong>。<br><br>
+          你的网络请求先走隧道到达另一台服务器（通常在国外），再从那里访问目标网站。这样你就能访问一些在国内直接访问不了的服务。<br><br>
+          <strong>常见工具</strong>：Clash、V2Ray、Shadowrocket（小火箭）
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔀</div>
+        <div class="card-title">什么是代理（Proxy）？</div>
+        <div class="card-body">
+          代理是<strong>一个"中间人"</strong>。你的请求先发给它，它帮你转发到目标服务器。<br><br>
+          代理和 VPN 很像，但代理通常只管特定软件的流量（比如只管浏览器），VPN 管整个电脑的流量。<br><br>
+          <strong>在 AI 开发中</strong>，通常用代理就够了。
+        </div>
+      </div>
+    </div>
+
+    <div class="tip-box" style="margin-top: 32px; max-width: 700px;">
+      <strong>💡 它们什么关系？</strong><br>
+      VPN 是"全身防护"（整个电脑的流量都走），代理是"定点转发"（只管某个软件）。<br>
+      对于用 AI 来说，<strong>大多数时候代理就够用了</strong>。你只需要让终端和 AI 工具能访问国外 API 就行。
+    </div>
+
+    <h3 style="font-size: 24px; font-weight: 700; margin-top: 56px; margin-bottom: 16px;">哪些情况需要？</h3>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <div class="card-title">✅ 需要的场景</div>
+        <div class="card-body">
+          • 使用 OpenAI（ChatGPT/Codex）的 API<br>
+          • 使用 Anthropic（Claude）的 API<br>
+          • 使用 Google Gemini 的 API<br>
+          • 访问 GitHub（偶尔需要）<br>
+          • 安装某些国外软件
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">❌ 不需要的场景</div>
+        <div class="card-body">
+          • 使用 <strong>DeepSeek</strong> 的 API（国内直连）<br>
+          • 使用 <strong>千问</strong> 的 API（阿里云直连）<br>
+          • 使用 <strong>Kimi</strong> 的 API（国内直连）<br>
+          • 使用 <strong>MiMo</strong> 的 API（小米直连）<br>
+          • <strong>安装 Hermes（国内直连）</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box" style="margin-top: 32px; max-width: 700px;">
+      <strong>⚠️ 重要提示：</strong>我们这个教程用的是<strong>国产 API（DeepSeek / 千问 / Kimi / MiMo）</strong>，<strong>不需要翻墙</strong>，国内直接连。所以你现在可以放心往下走，不需要先搞定 VPN。
+    </div>
+
+    <h3 style="font-size: 24px; font-weight: 700; margin-top: 56px; margin-bottom: 16px;">如果以后需要，怎么弄？</h3>
+    <p style="color: var(--text-secondary); font-size: 15.5px; line-height: 1.9; max-width: 700px;">
+      这里不提供具体工具，但告诉你思路：
+    </p>
+    <div class="step-block" style="margin-top: 24px;">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>找一个靠谱的机场/代理服务</h3>
+        <p>搜索引擎搜"科学上网"、"机场推荐"，找评价好、稳定的服务。<strong>付费的通常比免费的稳定得多。</strong>月费大概 15-30 元。</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>装好客户端</h3>
+        <p>大多数机场会给你一个订阅链接和客户端下载地址。Windows 用 <strong>Clash Verge</strong>，Mac 用 <strong>ClashX Pro</strong> 或 <strong>Surge</strong>，手机用<strong>小火箭</strong>（iOS）或 <strong>v2rayNG</strong>（Android）。</p>
+      </div>
+    </div>
+    <div class="step-block">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>开启代理后，再用 AI 工具</h3>
+        <p>代理开好之后，终端里设置一下环境变量（Hermes 的安装向导会帮你处理），就能正常访问国外 API 了。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 5: 安装教程 ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="install">
+  <div class="container">
+    <p class="section-label">CHAPTER 05</p>
+    <h2 class="section-title">开始安装</h2>
+    <p class="section-desc">
+      准备好了？跟着下面 6 步走，30 分钟搞定。
+    </p>
+
+    <!-- 图片提示词 ④ -->
+    <div class="img-placeholder">
+      <div class="icon">🖼️</div>
+      <strong>图片位置 ④：安装流程图</strong><br>
+      <span style="font-size:12px;">一条从左到右的时间线/进度条：<br>
+      6个节点：安装Hermes → 启动 → 选API → 配置钥匙 → 设指令 → 装Claude Code<br>
+      每个节点一个小图标（终端、火箭、钥匙、齿轮、对话框、完成勾）<br>
+      暗色背景，发光线条连接，科技风，极简</span>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-block" id="step1">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>安装 Hermes</h3>
+        <p>首先，打开你的<strong>终端</strong>（Terminal）：</p>
+        <p>
+          <strong>Mac 用户</strong>：按 <strong>Cmd + 空格</strong>，输入 <strong>终端</strong>，回车<br>
+          <strong>Windows 用户</strong>：按 <strong>Win + R</strong>，输入 <strong>powershell</strong>，回车
+        </p>
+        <p>然后粘贴下面这行命令，按回车：</p>
+        <div class="cmd">curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <div class="tip-box">
+          <strong>💡 Windows 用户注意：</strong>如果提示 <code>curl</code> 不是内部命令，说明你的 PowerShell 版本太老。解决方法：<br>
+          ① 打开微软商店（Microsoft Store），搜索 <strong>"Windows Terminal"</strong>，安装它<br>
+          ② 用 Windows Terminal 打开，再试一次上面的命令<br>
+          ③ 如果还是不行，先安装 Git：<code>winget install Git.Git</code>，然后用 <strong>Git Bash</strong> 运行上面的命令
+        </div>
+        <div class="warn-box">
+          <strong>⏳ 安装需要几分钟。</strong>它会自动下载 Python、安装依赖。看到 <strong>"Installation complete"</strong> 或类似的成功提示就OK了。<br>
+          过程中如果问你什么，一路按 <strong>回车</strong> 用默认值就行。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-block" id="step2">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>启动并初始化</h3>
+        <p>安装完成后，先运行设置向导：</p>
+        <div class="cmd">hermes setup<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>它会问你几个问题，<strong>全部按回车用默认值</strong>就好：</p>
+        <p>
+          ① "Select a provider" → 直接回车（后面再配）<br>
+          ② "Enable terminal tools?" → 回车（选 Yes）<br>
+          ③ 其他问题 → 一路回车
+        </p>
+        <p>设置完后，输入 <strong>hermes</strong> 启动：</p>
+        <div class="cmd">hermes<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>你会看到一个欢迎界面和一个输入框——<strong>恭喜，它活了！</strong></p>
+        <p>先输入 <strong>/exit</strong> 退出，我们去配 API。</p>
+        <div class="tip-box">
+          <strong>💡 什么是终端？</strong>终端就是一个"文字版的操作界面"。你平时用鼠标点来点去，在终端里是用打字的方式告诉电脑做什么。<strong>不需要懂代码，跟着教程复制粘贴就行。</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-block" id="step3">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>选一个 API，注册拿钥匙</h3>
+        <p>API 就是 AI 的"电费"。你用 AI 回答问题、写代码，都需要调用 API。<strong>按量付费，用多少花多少。</strong></p>
+        <p>推荐选 <strong>DeepSeek</strong>（最便宜）：</p>
+        <p>
+          ① 打开 <a href="https://platform.deepseek.com" target="_blank" rel="noopener"><strong>platform.deepseek.com</strong></a><br>
+          ② 用手机号注册登录<br>
+          ③ 左侧点 <strong>「API Keys」</strong><br>
+          ④ 点 <strong>「创建 API Key」</strong>，给它起个名字（随便写）<br>
+          ⑤ <strong>立刻复制</strong>，粘到备忘录里
+        </p>
+        <div class="warn-box">
+          <strong>⚠️ 钥匙只显示一次！</strong>复制之后就看不到了。一定要粘到备忘录保存好。<br>
+          然后去<strong>「充值」</strong>页面充 <strong>5~10 块钱</strong>，按量计费，够用很久。
+        </div>
+        <p style="margin-top: 16px;"><strong>其他选择：</strong></p>
+        <p>
+          • <strong>千问</strong>：<a href="https://dashscope.aliyun.com" target="_blank" rel="noopener">dashscope.aliyun.com</a>（有免费额度）<br>
+          • <strong>Kimi</strong>：<a href="https://platform.moonshot.cn" target="_blank" rel="noopener">platform.moonshot.cn</a>（新用户有免费额度）<br>
+          • <strong>MiMo</strong>：<a href="https://platform.mimo.xiaomi.com" target="_blank" rel="noopener">platform.mimo.xiaomi.com</a>（推理能力强）
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-block" id="step4">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>把钥匙配进 Hermes</h3>
+        <p>回到终端，运行模型配置：</p>
+        <div class="cmd">hermes model<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>它会给你一个交互式菜单：</p>
+        <p>
+          ① <strong>"Select provider"</strong> → 选 <strong>DeepSeek</strong>（或你注册的那个）<br>
+          ② <strong>"Enter API key"</strong> → 粘贴你刚才复制的钥匙<br>
+          ③ <strong>"Select model"</strong> → 直接回车选默认的就行
+        </p>
+        <p>配完后，它会自动测试连接。看到 <strong>"✓ Connected"</strong> 就成功了。</p>
+        <div class="tip-box">
+          <strong>💡 怎么验证？</strong>运行 <code>hermes chat -q "你好"</code>，如果 AI 回复了你，说明配好了。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step-block" id="step5">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <h3>给助手一份"说明书"</h3>
+        <p>这一步让 Hermes 变成<strong>你的专属助手</strong>，而不只是一个通用 AI。</p>
+        <p>在终端运行：</p>
+        <div class="cmd">hermes<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>启动后，直接跟它说话：</p>
+        <div class="cmd say">请把你的行为规则改成这样：1）用中文回答 2）简洁明了 3）遇到报错先翻译成人话再给方案 4）我说"帮我装XXX"你就直接执行安装命令<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>它会确认并保存。以后每次对话都会遵守这些规则。</p>
+        <div class="tip-box">
+          <strong>💡 这就是智能体的魅力：</strong>你用<strong>自然语言</strong>告诉它你想要什么，它就照做。不需要改配置文件，不需要懂代码。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step-block" id="step6">
+      <div class="step-num">6</div>
+      <div class="step-content">
+        <h3>让 Hermes 帮你装 Claude Code</h3>
+        <p>现在，直接跟 Hermes 说：</p>
+        <div class="cmd say">帮我安装 Claude Code，装完帮我验证一下<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>Hermes 会<strong>自动帮你执行安装命令</strong>。过程中如果弹出确认，输入 <strong>y</strong> 回车。</p>
+        <p>装完之后，<strong>新开一个终端窗口</strong>，输入：</p>
+        <div class="cmd">claude<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>看到 Claude Code 的欢迎界面——<strong>恭喜，你有两个 AI 助手了！</strong></p>
+        <div class="warn-box">
+          <strong>⚠️ Claude Code 需要 Node.js。</strong>如果提示找不到 node 命令，先装 Node.js：<br>
+          去 <a href="https://nodejs.org" target="_blank" rel="noopener"><strong>nodejs.org</strong></a> 下载 LTS 版本，安装完重开终端再试。<br>
+          （Hermes 也可以帮你装，跟它说"帮我装 Node.js"就行）
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 6: 完成 ═══════════ -->
+<div class="divider"></div>
+<section class="section" id="done" style="text-align: center;">
+  <div class="container">
+    <p class="section-label" style="letter-spacing: .5em;">CONGRATULATIONS</p>
+    <h2 class="section-title" style="font-size: clamp(36px, 6vw, 56px); margin-bottom: 24px;">你现在有两个 AI 助手了。</h2>
+    <p class="section-desc" style="margin: 0 auto; max-width: 600px; text-align: center;">
+      <strong style="color: var(--accent-gold);">Hermes</strong>：全能助手，能装软件、管文件、跑命令、记住你的偏好。<br>
+      <strong style="color: var(--accent);">Claude Code</strong>：编程专家，能写代码、改文件、部署项目。
+    </p>
+
+    <!-- 图片提示词 ⑤ -->
+    <div class="img-placeholder" style="max-width: 600px; margin: 48px auto;">
+      <div class="icon">🖼️</div>
+      <strong>图片位置 ⑤：完成画面</strong><br>
+      <span style="font-size:12px;">一个人坐在电脑前，屏幕上两个AI光球/助手在两侧发光<br>
+      左边一个金色光球（Hermes），右边一个蓝色光球（Claude Code）<br>
+      屏幕上显示代码和终端界面<br>
+      暗色宇宙背景，温暖的光线从屏幕照在人脸上<br>
+      科技感 + 温暖感，暗示"AI是你的伙伴"</span>
+    </div>
+
+    <p style="color: var(--text-secondary); font-size: 17px; margin-top: 40px;">
+      试试在 Claude Code 里输入：
+    </p>
+    <div class="cmd say" style="max-width: 560px; margin: 16px auto;">帮我做一个自我介绍网页，用 HTML，做完告诉我文件在哪里<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+    <p style="color: var(--text-secondary); font-size: 15px; margin-top: 16px;">
+      等一两分钟，打开文件夹，双击那个 .html 文件。<br>
+      <strong style="color: var(--text);">那个网页是你"做"的。</strong>
+    </p>
+
+    <a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener" class="hero-cta" style="margin-top: 48px;">了解更多 Hermes →</a>
+    <span class="hero-cta-sub" style="display: block; margin-top: 20px;">—— 星野宇宙 · 让每个人都用上 AI</span>
+  </div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer class="footer">
+  <p>星野宇宙 · <a href="https://github.com/dengyuanxing953-eng" target="_blank" rel="noopener">GitHub</a></p>
+  <p style="margin-top: 8px;">Hermes Agent by <a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener">Nous Research</a> · MIT License</p>
+</footer>
+
+<!-- ═══════════ NAV (sticky) ═══════════ -->
+<nav id="nav" style="
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(4,8,16,.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  padding: 0 24px;
+  transform: translateY(-100%);
+  transition: transform .4s var(--fx-ease);
+">
+  <div style="max-width: var(--max-w); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px;">
+    <a href="#top" style="font-weight: 700; font-size: 15px; color: var(--text); text-decoration: none;">✦ 星野宇宙</a>
+    <div style="display: flex; gap: 24px; font-size: 13px;">
+      <a href="#what" style="color: var(--text-secondary); text-decoration: none;">是什么</a>
+      <a href="#agents" style="color: var(--text-secondary); text-decoration: none;">有哪些</a>
+      <a href="#vpn" style="color: var(--text-secondary); text-decoration: none;">VPN</a>
+      <a href="#install" style="color: var(--text-secondary); text-decoration: none;">安装</a>
+    </div>
+  </div>
+</nav>
 
 <script>
-(function () {
-  const slides = [...document.querySelectorAll('.slide')];
-  const total = slides.length;
-  const bar = document.getElementById('bar');
-  const count = document.getElementById('count');
-  let i = 0;
-  let selectedProvider = null;
+// ── nav show/hide ──
+const nav = document.getElementById('nav');
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+  const sy = window.scrollY;
+  nav.style.transform = sy > 300 ? 'translateY(0)' : 'translateY(-100%)';
+  lastScroll = sy;
+});
 
-  function go(n) {
-    if (n < 0 || n >= total || n === i) return;
-    slides[i].classList.remove('active');
-    slides[i].classList.toggle('past', n > i);
-    slides[n].classList.remove('past');
-    slides[n].classList.add('active');
-    i = n;
-    document.body.dataset.step = i;
-    bar.style.width = (i / (total - 1) * 100) + '%';
-    count.textContent = String(i).padStart(2, '0') + ' / ' + String(total - 1).padStart(2, '0');
-    slides[i].scrollTop = 0;
-    if (i === 4) updateProviderContent();
-  }
-  count.textContent = '00 / ' + String(total - 1).padStart(2, '0');
-
-  document.querySelectorAll('[data-next]').forEach(b => b.addEventListener('click', () => go(i + 1)));
-  document.getElementById('back').addEventListener('click', () => go(i - 1));
-  addEventListener('keydown', e => {
-    if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); go(i + 1); }
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); go(i - 1); }
+// ── copy button ──
+function copyCmd(btn) {
+  const cmd = btn.parentElement;
+  const text = cmd.textContent.replace('复制', '').replace('已复制', '').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '已复制';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('ok'); }, 1600);
   });
-
-  // Copy buttons
-  document.querySelectorAll('.copy').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      if (btn.parentElement.classList.contains('rules-box')) {
-        const text = btn.parentElement.textContent.replace('复制', '').replace('已复制', '').trim();
-        navigator.clipboard.writeText(text).then(() => {
-          btn.textContent = '已复制'; btn.classList.add('ok');
-          setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('ok'); }, 1600);
-        });
-        return;
-      }
-      const node = btn.parentElement.childNodes;
-      let text = '';
-      node.forEach(n => { if (n.nodeType === 3) text += n.textContent; });
-      navigator.clipboard.writeText(text.trim()).then(() => {
-        btn.textContent = '已复制'; btn.classList.add('ok');
-        setTimeout(() => { btn.textContent = '复制'; btn.classList.remove('ok'); }, 1600);
-      });
-    });
-  });
-
-  // Provider selection
-  document.querySelectorAll('.provider-card').forEach(card => {
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
-      selectedProvider = card.dataset.provider;
-      updateProviderContent();
-    });
-  });
-
-  function updateProviderContent() {
-    document.querySelectorAll('.provider-content').forEach(el => {
-      el.style.display = el.dataset.for === selectedProvider ? 'block' : 'none';
-    });
-    const noTip = document.getElementById('no-selection-tip');
-    const configStep = document.getElementById('config-step');
-    const configCmd = document.getElementById('config-cmd');
-    const configDesc = document.getElementById('config-desc');
-    if (selectedProvider) {
-      if (noTip) noTip.style.display = 'none';
-      if (configStep) configStep.style.display = 'block';
-      if (configCmd) configCmd.style.display = 'block';
-      if (configDesc) configDesc.style.display = 'block';
-    } else {
-      if (noTip) noTip.style.display = 'block';
-      if (configStep) configStep.style.display = 'none';
-      if (configCmd) configCmd.style.display = 'none';
-      if (configDesc) configDesc.style.display = 'none';
-    }
-  }
-})();
+}
 </script>
 
 </body>
