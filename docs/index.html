@@ -593,16 +593,18 @@ a:hover { color: var(--gold); }
       <div class="step-body">
         <h3>安装 Hermes</h3>
         <p>打开你的<strong>终端</strong>（Terminal）：</p>
-        <p><strong>Mac</strong>：按 <strong>Cmd + 空格</strong>，输入"终端"，回车<br>
-        <strong>Windows</strong>：按 <strong>Win + R</strong>，输入 <strong>powershell</strong>，回车</p>
-        <p>粘贴这行命令，按回车：</p>
-        <div class="cmd">curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
-        <div class="tip">
-          <strong>💡 Windows 用户如果 curl 不可用：</strong><br>
-          ① 打开微软商店，搜索 <strong>"Windows Terminal"</strong>，安装<br>
-          ② 用 Windows Terminal 重新打开，再试<br>
-          ③ 还是不行？先装 Git：<code>winget install Git.Git</code>，然后用 <strong>Git Bash</strong> 运行
+        <p><strong>Mac</strong>：按 <strong>Cmd + 空格</strong>，输入"终端"，回车</p>
+        <p><strong>Windows</strong>：先装 Git（下面有说明），然后用 <strong>Git Bash</strong> 运行命令。</p>
+        <div class="warn">
+          <strong>⚠️ Windows 用户必读：</strong>Hermes 的安装脚本是 bash 脚本，Windows 自带的 PowerShell 不能直接运行。<br><br>
+          <strong>你只需要做一件事：装 Git。</strong><br>
+          ① 打开微软商店（Microsoft Store），搜索 <strong>"Git"</strong>，安装 <strong>"Git"</strong><br>
+          ② 或者按 <strong>Win + R</strong>，输入 <code>winget install Git.Git</code> 回车<br>
+          ③ 装完后，按 <strong>Win + R</strong>，输入 <strong>Git Bash</strong>，回车<br>
+          ④ 在 Git Bash 里运行下面的命令
         </div>
+        <p>在终端（Mac）或 Git Bash（Windows）里粘贴这行命令，按回车：</p>
+        <div class="cmd">curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
         <div class="warn">
           <strong>⏳ 安装需要几分钟</strong>，它会自动下载 Python 和依赖。看到 <strong>"Installation complete"</strong> 就成功了。过程中问什么，一路<strong>回车</strong>。
         </div>
@@ -670,10 +672,11 @@ a:hover { color: var(--gold); }
         <h3>给助手一份"说明书"</h3>
         <p>启动 Hermes：</p>
         <div class="cmd">hermes<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
-        <p>直接跟它说话：</p>
+        <p><strong>方式一（推荐）</strong>：直接跟它说话：</p>
         <div class="cmd say">请把你的行为规则改成这样：1）用中文回答 2）简洁明了 3）遇到报错先翻译成人话再给方案 4）我说"帮我装XXX"你就直接执行安装命令<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
-        <p>它会确认并保存。<strong>以后每次对话都遵守。</strong></p>
-        <div class="tip"><strong>💡 这就是智能体：</strong>你用自然语言告诉它规则，它就照做。不需要改配置文件。</div>
+        <p><strong>方式二（更保险）</strong>：退出 Hermes，用命令直接改配置：</p>
+        <div class="cmd">hermes config set agent.system_prompt "你是一个中文AI助手。用中文回答，简洁明了。遇到报错先翻译成人话再给方案。用户说帮我装XXX就直接执行安装命令。"<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
+        <p>两种方式效果一样。<strong>方式一对话更自然，方式二更精确。</strong></p>
       </div>
     </div>
 
@@ -748,7 +751,14 @@ export ANTHROPIC_BASE_URL="https://api.deepseek.com/v1"<button class="copy-btn" 
         <div class="cmd"><span class="os-tag">WINDOWS POWERSHELL</span>$env:ANTHROPIC_API_KEY="你的DeepSeek钥匙"
 $env:ANTHROPIC_BASE_URL="https://api.deepseek.com/v1"<button class="copy-btn" onclick="copyCmd(this)">复制</button></div>
         <p>启动 <code>claude</code>，它就会用 DeepSeek 模型了。</p>
-        <div class="tip"><strong>💡 原理：</strong>Claude Code 默认调用 Anthropic 的 API。我们通过设置 <code>BASE_URL</code> 把请求"转寄"到 DeepSeek 的服务器。DeepSeek 兼容 Anthropic 的接口格式，所以 Claude Code 能直接用。</div>
+        <div class="tip"><strong>💡 让钥匙永久生效（重要！）：</strong><br>
+        上面的 <code>export</code> 命令只在当前窗口有效，关了就没了。<br><br>
+        <strong>Mac/Linux</strong>：运行这一行，永久写入：<br>
+        <code>echo 'export ANTHROPIC_API_KEY="你的钥匙"' >> ~/.bashrc && echo 'export ANTHROPIC_BASE_URL="https://api.deepseek.com/v1"' >> ~/.bashrc && source ~/.bashrc</code><br><br>
+        <strong>Windows</strong>：在 PowerShell 里运行：<br>
+        <code>[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", "你的钥匙", "User")</code><br>
+        <code>[Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL", "https://api.deepseek.com/v1", "User")</code><br><br>
+        这样每次打开新终端都自动生效，不用重复设置。</div>
       </div>
     </div>
     <div class="step">
